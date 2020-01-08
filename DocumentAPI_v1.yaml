@@ -1,0 +1,1408 @@
+openapi: 3.0.0
+info:
+  title: Document API
+  contact:
+    email: ecm-im-synergy@nl.abnamro.com
+  description: APIs for storing, retrieving, updating metadata and adding/deleting related entities of documents
+  version: "1.2"
+  x-apiType: enterprise
+servers:
+  - url: http://esb-rest-st.nl.eu.abnamro.com/documents/v1
+    description: ST environemnt
+paths:
+  /{documentId}/metadata:
+    get:
+      tags:
+        - documents
+      operationId: getDocumentMetadata
+      summary: Retrieves document metadata using unique document id from the Archive
+      parameters:
+        - name: Consumer-Id
+          in: header
+          required: true
+          description: Id of the connecting application consuming the API
+          schema:
+            type: string
+          example: drm_test
+        - in: header
+          name: Trace-Id
+          required: true
+          schema:
+            type: string
+          description: Trace id used to trace the request from beginning to the end
+          example: 1234
+        - name: documentId
+          in: path
+          required: true
+          description: Unique document id required to retrieve the document
+          schema:
+            type: string
+          example: drm_1234567890
+      responses:
+        '200':
+          description: Document Metadata from the Archive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentMetadataResponseObject"
+        '400':
+          description: |
+            "One or more input parameters are invalid
+            Detailed Error List:
+              ---
+              - DOCUMENT_ID_MISSING
+                > Document Id is mandatory
+              - CONSUMER_ID_MISSING
+                > Consumer Id is mandatory
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_ID_MISSING",
+                      "message": "Document Id is mandatory",
+                      "status": "400",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '403':
+          description: |
+            "Consumer does not have access to the document
+
+            Detailed Error List:
+              ---
+                - ACCESS_DENIED
+                  > Consumer does not have access to the document
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "ACCESS_DENIED",
+                      "message": "Consumer has no access to DOCUMENT having id or path= 888888000012345678",
+                      "status": "403",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '404':
+          description: |
+            Document is not present in the Archive
+            Detailed Error List:
+              ---
+                - DOCUMENT_NOT_FOUND
+                  > Document is not present in the Archive
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_NOT_FOUND",
+                      "message": "Item [DOCUMENT] with id: 888888000012345678 is not present.",
+                      "status": "404",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '500':
+          description: |
+            "Technical error within the service"
+            Detailed Error List:
+              ---
+              - INTERNAL_SERVER_ERROR
+                > "Technical issue within the service."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "INTERNAL_SERVER_ERROR",
+                      "message": "Technical issue within the service.",
+                      "status": "500",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+  /{documentId}:
+    get:
+      tags:
+        - documents
+      summary: Retrieves document content using unique document id from the Archive
+      operationId: getDocument
+      parameters:
+        - name: Consumer-Id
+          in: header
+          required: true
+          description: Id of the connecting application consuming the API
+          schema:
+            type: string
+          example: drm_test
+        - in: header
+          name: Trace-Id
+          required: true
+          schema:
+            type: string
+          example: 1234
+          description: Id to trace the request from beginning to the end
+        - name: documentId
+          in: path
+          required: true
+          description: Unique document id required to retrieve the document content
+          schema:
+            type: string
+          example: drm_1234567890
+      responses:
+        '200':
+          description: Document content from the Archive
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: |
+            One or more input parameters are invalid, Invalid messages list are as below -
+            Detailed Error List:
+              ---
+              - DOCUMENT_ID_MISSING
+                > Document Id is mandatory
+              - CONSUMER_ID_MISSING
+                > Consumer Id is mandatory
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_ID_MISSING",
+                      "message": "Document Id is mandatory",
+                      "status": "400",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '403':
+          description: |
+            "Consumer doesn't have access to the document
+            Detailed Error List:
+              ---
+                - ACCESS_DENIED
+                  > Consumer does not have access to the document
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "ACCESS_DENIED",
+                      "message": "Consumer  has no access to DOCUMENT having id or path= 888888000012345678",
+                      "status": "403",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '404':
+          description: |
+            Document is not present in the Archive
+            Detailed Error List:
+              ---
+                - DOCUMENT_NOT_FOUND
+                  > Document is not present in the Archive
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_NOT_FOUND",
+                      "message": "Item [DOCUMENT] with id: 888888000012345678 is not present.",
+                      "status": "404",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '500':
+          description: |
+            "Technical error within the service"
+            Detailed Error List:
+              ---
+              - INTERNAL_SERVER_ERROR
+                > "Technical issue within the service."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "INTERNAL_SERVER_ERROR",
+                      "message": "Technical issue within the service.",
+                      "status": "500",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+  /{documentId}/metadata/patch:
+    post:
+      tags:
+        - documents
+      summary: Updates the metadata of the existing document
+      operationId: partialUpdateDocumentMetadata
+      parameters:
+        - name: Consumer-Id
+          in: header
+          required: true
+          description: Id of the connecting application consuming the API
+          schema:
+            type: string
+          example: drm_test
+        - in: header
+          name: Trace-Id
+          required: true
+          schema:
+            type: string
+          description: Id to trace the request from beginning to the end
+          example: 1234
+        - in: path
+          name: documentId
+          required: true
+          schema:
+            type: string
+          description: unique id of the document
+          example: 12323232
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentMetadata"
+      responses:
+        '204':
+          description: Metadata updated successfully for the document.
+        '400':
+          description: |
+            One or more input parameters are invalid, Invalid messages list are as below -
+            Detailed Error List:
+              ---
+              - DOCUMENT_ID_MISSING
+                > Document Id is mandatory
+              - CONSUMER_ID_MISSING
+                > Consumer Id is mandatory
+              - SIGN_STATUS_INVALID
+                > Sign Status value is incorrect
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_ID_MISSING",
+                      "message": "Document Id is mandatory",
+                      "status": "400",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '403':
+          description: |
+            Consumer doesn't have access to the document
+            Detailed Error List:
+              ---
+                - ACCESS_DENIED
+                  > Consumer does not have access to the document
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "ACCESS_DENIED",
+                      "message": "Consumer has no access to DOCUMENT having id or path= 888888000012345678",
+                      "status": "403",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '404':
+          description: |
+            Document is not present in the Archive
+            Detailed Error List:
+              ---
+                - DOCUMENT_NOT_FOUND
+                  > Document is not present in the Archive
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_NOT_FOUND",
+                      "message": "Item [DOCUMENT] with id: 888888000012345678 is not present.",
+                      "status": "404",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '500':
+          description: |
+            "Technical error within the service"
+            Detailed Error List:
+              ---
+              - INTERNAL_SERVER_ERROR
+                > "Technical issue within the service."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "INTERNAL_SERVER_ERROR",
+                      "message": "Technical issue within the service.",
+                      "status": "500",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+  /:
+    post:
+      tags:
+        - documents
+      summary: Stores a document in the Archive along with metadata and returns unique id of the document
+      operationId: postDocument
+      parameters:
+        - name: Consumer-Id
+          in: header
+          required: true
+          description: Id of the connecting application consuming the API
+          schema:
+            type: string
+          example: drm_test
+        - in: header
+          name: Trace-Id
+          required: true
+          schema:
+            type: string
+          description: Id to trace the request from beginning to the end
+          example: 1234
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                documentRequest:
+                  $ref: "#/components/schemas/DocumentRequest"
+                content:
+                  type: string
+                  format: binary
+                  required:
+                    - content
+      responses:
+        '200':
+          description: Document id and document in dossier id(If present) that were stored.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentStorageResponse"
+        '400':
+          description: |
+            "One or more input parameters are invalid, Invalid messages list are as below -
+            Detailed Error List:
+              ---
+              - DOCUMENT_NAME_MISSING
+                > Document Name should not be empty
+              - RELATED_ENTITY_INFO_ADMINISTRATION_INVALID
+                > Related Entity Administration Value is incorrect
+              - RELATED_ENTITY_INFO_TYPE_INVALID
+                > Related Entity Info Type is incorrect
+              - DOCUMENT_TYPE_INVALID
+                > Provided Document Type/Sub type combination or values are invalid
+              - CONSUMER_ID_MISSING
+                > Consumer Id is mandatory
+              - DOCUMENT_CONTENT_MISSING
+                > Document content is mandatory
+              - MORE_THAN_ONE_DOSSIER_FOUND
+                > Multiple dossiers found for the request
+              - SIGN_STATUS_INVALID
+                > Sign Status value is incorrect
+              - SOURCE_CREATION_DATE_INVALID
+                > Source Creation Date is invalid, valid date format is "yyyy-MM-ddThh:mm:ssZ"
+              - VALID_FROM_DATE_INVALID
+                > Valid From Date is invalid, valid date format is "yyyy-MM-dd"
+              - VALID_TO_DATE_INVALID
+                > Valid To Date is invalid, valid date format is "yyyy-MM-dd"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_NAME_MISSING",
+                      "message": "Document Name should not be empty",
+                      "status": "400",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '403':
+          description: |
+            Consumer doesn't have access to the dossier
+            Detailed Error List:
+              ---
+                - ACCESS_DENIED
+                  > Consumer does not have access to the dossier
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "ACCESS_DENIED",
+                      "message": "Consumer has no access to DOSSIER having id 888888000012345678",
+                      "status": "403",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '404':
+          description: |
+            Dossier is not present in the Archive
+            Detailed Error List:
+              ---
+                - DOSSIER_NOT_FOUND
+                  > Dossier is not present in the Archive
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOSSIER_NOT_FOUND",
+                      "message": "Item [DOSSIER] with id: 888888000012345678 is not present.",
+                      "status": "404",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '500':
+          description: |
+            "Technical error within the service"
+            Detailed Error List:
+              ---
+              - INTERNAL_SERVER_ERROR
+                > "Technical issue within the service."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "INTERNAL_SERVER_ERROR",
+                      "message": "Technical issue within the service.",
+                      "status": "500",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+  /{documentId}/relatedentitiesaddition:
+    post:
+      tags:
+        - documents
+      summary: Adds one or more related entities to the document
+      operationId: addRelatedEntities
+      parameters:
+        - name: Consumer-Id
+          in: header
+          schema:
+            type: string
+          description: Id of the connecting application consuming the API
+        - name: Trace-Id
+          in: header
+          schema:
+            type: string
+          description: Unique trace id for end-2-end tracing of the REST API call
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique Id of the document, example- 1234567890
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelatedEntities"
+        required: true
+      responses:
+        '204':
+          description: Related Entities added to the document
+        '400':
+          description: |
+            One or more input parameters are invalid.
+            Detailed Error List:
+              ---
+              - DOCUMENT_ID_MISSING
+                > Document Id is mandatory
+              - CONSUMER_ID_MISSING
+                > Consumer Id is mandatory
+              - RELATED_ENTITY_INFO_MISSING
+                > Atleast one Related Entity Information is mandatory
+              - RELATED_ENTITY_INFO_ID_MISSING
+                > Related Entity Id can't be null
+              - RELATED_ENTITY_INFO_ADMINISTRATION_ID_MISSING
+                > Related Entity Administration Id can't be null
+              - RELATED_ENTITY_INFO_TYPE_MISSING
+                > Related Entity type can't be null
+              - RELATED_ENTITY_INFO_ADMINISTRATION_ID_INVALID
+                > Related Entity Administration ID Value is incorrect
+              - RELATED_ENTITY_INFO_TYPE_INVALID
+                > Related Entity Info Type is incorrect
+              - RELATED_ENTITY_INFO_ALREADY_PRESENT
+                > The combination of id, type and administrationId is already present in the system
+              - RELATED_ENTITIES_COUNT_EXCEEDED
+                > Related Entities count exceed the defined boundary of 20 items
+              - DOSSIER_ALREADY_CLOSED
+                > The related dossier is already closed
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_ID_MISSING",
+                      "message": "Document Id is mandatory",
+                      "status": "400",
+                      "traceId": "1234"
+                    },
+                    {
+                      "code": "RELATED_ENTITY_INFO_ADMINISTRATION_ID_INVALID",
+                      "message": "The administrationId value for the combination of id=%1, type=%2 and administrationId=%3 is not valid",
+                      "status": "400",
+                      "traceId": "1234",
+                      "params": ["12345","Customer","xxx"]
+                    },
+                    {
+                      "code": "RELATED_ENTITY_INFO_TYPE_INVALID",
+                      "message": "The type value for the combination of id=%1, type=%2 and administrationId=%3 is not valid",
+                      "status": "400",
+                      "traceId": "1234",
+                      "params": ["12345","Custom","xxx"]
+                    },
+                    {
+                      "code": "RELATED_ENTITY_INFO_ALREADY_PRESENT",
+                      "message": "The combination of id=%1, type=%2 and administrationId=%3 is already present in the system",
+                      "status": "400",
+                      "traceId": "1234",
+                      "params": ["12345","Customer","2"]
+                    }
+                    ]
+                  }
+        '403':
+          description: |
+            Consumer doesn't have access to the document
+            Detailed Error List:
+              ---
+              - ACCESS_DENIED
+                > Consumer does not have access to the document
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "ACCESS_DENIED",
+                      "message": "Consumer has no access to the document",
+                      "status": "403",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '404':
+          description: |
+            Document is not present in the Archive
+            Detailed Error List:
+              ---
+                - DOCUMENT_NOT_FOUND
+                  > Document is not present in the Archive
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_NOT_FOUND",
+                      "message": "Document is not present in the Archive",
+                      "status": "404",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '500':
+          description: |
+            Technical error within the service
+            Detailed Error List:
+              ---
+              - INTERNAL_SERVER_ERROR
+                > "Technical issue within the service."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "INTERNAL_SERVER_ERROR",
+                      "message": "Technical issue within the service.",
+                      "status": "500",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+  /{documentId}/relatedentitiesdeletion:
+    post:
+      tags:
+        - documents
+      summary: Deletes one or more related entities from the document
+      operationId: deleteRelatedEntities
+      parameters:
+        - name: Consumer-Id
+          in: header
+          schema:
+            type: string
+          description: Id of the connecting application consuming the API
+        - name: Trace-Id
+          in: header
+          schema:
+            type: string
+          description: Unique trace id for end-2-end tracing of the REST API call
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique Id of the document, example- 1234567890
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelatedEntities"
+        required: true
+      responses:
+        '204':
+          description: Related Entities deleted from the document
+        '400':
+          description: |
+            One or more input parameters are invalid.
+            Detailed Error List:
+              ---
+              - DOCUMENT_ID_MISSING
+                > Document Id is mandatory
+              - CONSUMER_ID_MISSING
+                > Consumer Id is mandatory
+              - RELATED_ENTITY_INFO_MISSING
+                > Atleast one Related Entity Information is mandatory
+              - RELATED_ENTITY_INFO_ID_MISSING
+                > Related Entity Id cannot be null
+              - RELATED_ENTITY_INFO_ADMINISTRATION_ID_MISSING
+                > Related Entity Administration Id cannot be null
+              - RELATED_ENTITY_INFO_TYPE_MISSING
+                > Related Entity type cannot be null
+              - RELATED_ENTITY_INFO_ADMINISTRATION_ID_INVALID
+                > Related Entity Administration ID Value is incorrect
+              - RELATED_ENTITY_INFO_TYPE_INVALID
+                > Related Entity Info Type is incorrect
+              - RELATED_ENTITY_INFO_DOES_NOT_EXIST
+                > Related Entity information does not exist in the system
+              - RELATED_ENTITIES_COUNT_EXCEEDED
+                > Related Entities count exceed the defined boundary of 20 items
+              - DOSSIER_ALREADY_CLOSED
+                > The related dossier is already closed
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_ID_MISSING",
+                      "message": "Document Id is mandatory",
+                      "status": "400",
+                      "traceId": "1234"
+                    },
+                    {
+                      "code": "RELATED_ENTITY_INFO_ADMINISTRATION_ID_INVALID",
+                      "message": "The administrationId value for the combination of id=%1, type=%2 and administrationId=%3 is not valid",
+                      "status": "400",
+                      "traceId": "1234",
+                      "params": ["12345","Customer","xxx"]
+                    },
+                    {
+                      "code": "RELATED_ENTITY_INFO_TYPE_INVALID",
+                      "message": "The type value for the combination of id=%1, type=%2 and administrationId=%3 is not valid",
+                      "status": "400",
+                      "traceId": "1234",
+                      "params": ["12345","Custom","xxx"]
+                    },
+                    {
+                      "code": "RELATED_ENTITY_INFO_DOES_NOT_EXIST",
+                      "message": "The combination of id=%1, type=%2 and administrationId=%3 does not exist in the system",
+                      "status": "400",
+                      "traceId": "1234",
+                      "params": ["12345","Customer","2"]
+                    }
+                    ]
+                  }
+        '403':
+          description: |
+            Consumer doesn't have access to the document
+            Detailed Error List:
+              ---
+              - ACCESS_DENIED
+                > Consumer does not have access to the document
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "ACCESS_DENIED",
+                      "message": "Consumer has no access to the Document",
+                      "status": "403",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '404':
+          description: |
+            Document is not present in the Archive
+            Detailed Error List:
+              ---
+              - DOCUMENT_NOT_FOUND
+                > Document is not present in the Archive
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "DOCUMENT_NOT_FOUND",
+                      "message": "Document is not present in the Archive",
+                      "status": "404",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+        '500':
+          description: |
+            Technical error within the service
+            Detailed Error List:
+              ---
+              - INTERNAL_SERVER_ERROR
+                > "Technical issue within the service."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  errors:
+                    $ref: "#/components/schemas/Errors"
+                example:
+                  {
+                    "errors": [
+                    {
+                      "code": "INTERNAL_SERVER_ERROR",
+                      "message": "Technical issue within the service.",
+                      "status": "500",
+                      "traceId": "1234"
+                    }
+                    ]
+                  }
+components:
+  schemas:
+    DocumentMetadataResponseObject:
+      allOf:
+        - $ref: '#/components/schemas/DocumentMetadata'
+      properties:
+        documentType:
+          $ref: '#/components/schemas/DocumentType'
+        retention:
+          $ref: '#/components/schemas/Retention'
+    DocumentMetadata:
+      type: object
+      description: This model contains all the metadata of the document
+      properties:
+        contentSize:
+          type: integer
+          format: int64
+          example: 123457
+          description: Size of the document content in bytes
+          readOnly: true
+        contentType:
+          type: string
+          description: >-
+            Mime type of the content(For Exam
+            ple- For pdf files, mime type is
+            application/pdf). MIME types identify internet files based on their nature and format. MIME Type categorizing
+            (if any) helps the browser open the file(if needed) with appropriate extension or plugin.
+          readOnly: true
+          example: application/pdf
+        creationDateTime:
+          type: string
+          example: '2018-10-10T10:00:00Z'
+          format: date-time
+          description: Moment on which the request to store the document was received
+          readOnly: true
+        creatorConsumerId:
+          type: string
+          example: test_application
+          description: Consumer Id of the application that stored the document
+          readOnly: true
+        description:
+          type: string
+          example: Mortgage document
+          description: Describing the purpose/usage of the document
+          readOnly: true
+        validityStatus:
+          type: string
+          description: Current Status of the document, indicates   whether the document is accepted and can be re-used in another dossier or not.
+            DRAFT - Document has been stored but not accepted.
+            RE_USABLE - document is accepted and can be re-used in another dossier.
+            UN_USABLE - Document is not accepted and can not be re-used in another dossier.
+          enum:
+            - DRAFT
+            - RE_USABLE
+            - UN_USABLE
+          readOnly: true
+        signStatus:
+          type: string
+          example: TO_BE_SIGNED
+          description: >-
+            Indicates whether the document is signed, [{TO_BE_SIGNED - Document has been shared and it is yet to signed}, {SIGNED - Document is signed}]
+          enum:
+            - TO_BE_SIGNED
+            - SIGNED
+        alternateDocumentType:
+          type: string
+          example: Advies Sanctions desk
+          description: Describes a document classification which is consumer specific and different from standard classification
+          readOnly: true
+        documentId:
+          type: string
+          example: 1234567890
+          description: The unique id which helps in identifying the document.
+          readOnly: true
+        links:
+          type: array
+          maxItems: 20
+          minItems: 0
+          description: Links define the relations and the urls of the target API to the current API
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+        lastModifierUserId:
+          type: string
+          example: A1234
+          description: Identifier of the user who is the most recent modifier of the metadata of the document
+          readOnly: true
+        lastModifiedTimestamp:
+          type: string
+          format: date-time
+          example: '2018-10-10T10:00:00Z'
+          description: Date and time when the last update was performed on
+          readOnly: true
+        documentName:
+          type: string
+          example: mortgage_contract
+          description: Name of the document along with the extension of the content of the document, extension is not mandatory.
+          readOnly: true
+        relatedEntity:
+          type: array
+          maxItems: 1000
+          minItems: 0
+          description: >-
+            List of related entities. Object indicating the Entity the document is linked to. Related entities define the
+            linked entities to which the document belongs, like customer or contract or process.
+          items:
+            $ref: '#/components/schemas/RelatedEntity'
+          readOnly: true
+        scope:
+          type: array
+          maxItems: 1000
+          minItems: 0
+          description: >-
+            Scope of the document. Scope helps in finding the documents which don't have an identifier or are not
+            related to any client.The scope set indicates country, business lines, region etc. For Example - If the
+            document is related to a specific domain, then the scope of the document will be the domain name or if the
+            document was stored by a German user, the scope information will have type- Country, value- Germany.
+          items:
+            $ref: '#/components/schemas/Scope'
+          readOnly: true
+        sourceCreationDateTime:
+          type: string
+          example: '2018-10-10T10:00:00Z'
+          format: date-time
+          description: This is the date and time on which the document was created in the source system
+          readOnly: true
+        sourceCreatorUserId:
+          type: string
+          example: A1234
+          description: This is the ID of the user who created the document in the source system
+          readOnly: true
+        sourceLabel:
+          type: string
+          example: Document Generator
+          description: Name of the application generating the document
+          readOnly: true
+        title:
+          type: string
+          example: Mortgage contract for customer 123456
+          description: Title of the document
+          readOnly: true
+        validFromDate:
+          type: string
+          example: '2018-10-10'
+          format: date
+          description: This indicates the validity start date for the document. (e.g. issue date of passport)
+          readOnly: true
+        validToDate:
+          type: string
+          example: '2018-10-10'
+          format: date
+          description: This indicates the validity end date for the document. (e.g. expiry date of passport)
+          readOnly: true
+    DocumentStorageResponse:
+      type: object
+      properties:
+        documentId:
+          description: Id of the original document.
+          example: drm_1234567890
+          type: string
+        documentDossierReferenceId:
+          type: string
+          example: 1234567890
+          description: Id of the link between the master document and a dossier. Only present if the document is stored in the context of a dossier
+    DocumentDossierReference:
+      type: object
+      description: >-
+        This class contains values related to document in dossier, if the document is part of a dossier. DocumentDossier
+        is a reference to the master document, and contains usage information of the document pertaining to a process or
+        product dossier. Also, If the consumer does not know the unique dossier id, then the consumer can search for a
+        dossier based on the dossier name and if a unique dossier is found, then document will be linked to that dossier.
+      properties:
+        documentDossierLifeCycleStatus:
+          type: string
+          description: >-
+            Life Cycle State of document in dossier, {  [STAGED - means document
+            in dossier has been linked and has not been reviewed for this process
+            or product],  [PROCESS - means document in dossier review is in
+            progress], [REJECTED - means document has been rejected], [PUBLISHED -
+            Document review is successful and is published],  [ARCHIVED - Document 
+            is archived in the repository] }
+          enum:
+            - STAGED
+            - PROCESS
+            - REJECTED
+            - PUBLISHED
+            - ARCHIVED
+        dossierId:
+          type: string
+          description: Unique id to find the exact dossier
+        dossierSearchCriteria:
+          $ref: "#/components/schemas/DossierSearchCriteria"
+    DocumentRequest:
+      type: object
+      required:
+        - documentMetadata
+      properties:
+        documentDossierReference:
+          $ref: '#/components/schemas/DocumentDossierReference'
+        addToDossier:
+          type: boolean
+          description: Identifies whether the document should be stored inside a dossier
+        documentMetadata:
+          $ref: '#/components/schemas/DocumentMetadataRequest'
+      description: >-
+        This model class contains all the request parameters required to store a document
+    DocumentMetadataRequest:
+      type: object
+      required:
+        - documentType
+        - documentName
+      properties:
+        securityClassifier:
+          type: string
+          example: /HK/INT.Desk/Channels
+          description: This is used to define the security of the document. It is always a pre-defined value generated and used after consultation
+        description:
+          type: string
+          example: Mortgage document
+          description: Description of the document
+        documentType:
+          $ref: '#/components/schemas/DocumentType'
+        alternateDocumentType:
+          type: string
+          example: Advies Sanctions desk
+          description: Describes a document classification which is consumer specific and different from standard classification
+        signStatus:
+          type: string
+          example: TO_BE_SIGNED
+          description: >-
+            Indicates whether the document is signed, [{TO_BE_SIGNED - Document has been shared and it is yet to signed}, {SIGNED - Document is signed}]
+          enum:
+            - TO_BE_SIGNED
+            - SIGNED
+        documentName:
+          type: string
+          example: mortgage_contract
+          description: Name of the document
+        relatedEntity:
+          type: array
+          maxItems: 1000
+          minItems: 0
+          description: >-
+            Object indicating the Entity the document is linked to. Related entities define the linked entities to
+            which the document belongs, like customer or contract or process.
+          items:
+            $ref: '#/components/schemas/RelatedEntity'
+        scope:
+          type: array
+          maxItems: 1000
+          minItems: 0
+          description: >-
+            Scope of the document. Scope helps in finding the documents which don't have an identifier or are not
+            related to any client.The scope set indicates country, business lines, region etc. For Example - If the
+            document is related to a specific domain, then the scope of the document will be the domain name or if
+            the document was stored by a German user, the scope information will have type- Country, value- Germany.
+          items:
+            $ref: '#/components/schemas/Scope'
+        sourceCreationDateTime:
+          example: '2018-10-10T10:00:00Z'
+          format: date-time
+          description: This is the date on which the document was created in the source system
+        sourceCreatorUserId:
+          type: string
+          example: A1234
+          description: This is the ID of the user who created the document in the source system
+        sourceId:
+          type: string
+          example: 1
+          description: >-
+            Id of the application/connector indicating where the document has
+            originated from
+        title:
+          type: string
+          example: Mortgage contract for customer 123456
+          description: Title of the document
+        validFromDate:
+          type: string
+          example: '2018-10-10'
+          format: date
+          description: This indicates the validity start date for the document. (e.g. issue date of passport)
+        validToDate:
+          type: string
+          example: '2018-10-10'
+          format: date
+          description: This indicates the validity end date for the document. (e.g. expiry date of passport)
+      description: Contains information/metadata of the document
+    DocumentType:
+      type: object
+      properties:
+        subType:
+          type: string
+          example: '10'
+          description: Used to identify the fine grained classification of the document. For example, passport. The list of possible values can be found at ->
+          x-externalDocs: https://confluence.aws.abnamro.org/download/attachments/52250944/Copy%20of%20Doctype_mapping%201.22.xlsm?api=v2
+        type:
+          type: string
+          example: '1'
+          description: >-
+            Used to identify the high level classification of the document. For example, Government Registration
+            Document which can have usb types like Passport, Driving License, etc. List of doc type and sub types can be found at ->
+          x-externalDocs: https://confluence.aws.abnamro.org/download/attachments/52250944/Copy%20of%20Doctype_mapping%201.22.xlsm?api=v2
+      description: Type and Sub types for the document are wrapped in this object
+    Link:
+      type: object
+      description: >-
+        This class provides information about the extra operations that are
+        related to the current API endpoint
+      properties:
+        link:
+          type: string
+          example: 'http://localhost:8080/documents/v1/1234567890'
+          description: Link(URL) of the target API
+        rel:
+          type: string
+          description: This attribute denotes the relation or name of the target API
+          example: content
+    RelatedEntity:
+      type: object
+      description: >-
+        Object indicating the Entity the document is linked to. Related entities define the linked entities to which the
+        document belongs, like customer or contract or process.
+      properties:
+        administrationId:
+          type: string
+          example: '2'
+          description: >-
+            This is the administration of the identifier to which the document belongs. For example, if the document
+            belongs to a customer, then the managing administration is one of the customer administration systems of the organisation.
+          x-externalDocs:
+            https://confluence.aws.abnamro.org/display/ECMSER/All+SQL+scripts+for+administration+data?preview=/34113796/58521790/Administrations%20Maintained%20by%20DRM.xlsx
+        id:
+          type: string
+          example: '12345'
+          description: >-
+            This is the unique identifier of the entity to which the document belongs. This should always occur in
+            conjunction with the other two attributes. For Documents, atleast one set of linking attributes should be
+            available, the most common being customer.
+        type:
+          type: string
+          example: Customer
+          description: >-
+            This is the type of the linked object information that is stored. Values could be Customer, Contract, Account,
+            Process, Building, Employee etc.
+          x-externalDocs:
+            https://confluence.aws.abnamro.org/display/ECMSER/All+SQL+scripts+for+administration+data?preview=/34113796/58521790/Administrations%20Maintained%20by%20DRM.xlsx
+    RelatedEntities:
+      type: object
+      description: >-
+        One or more combinations of the type, administration and identification number with which a document can be identified
+      required:
+        - relatedEntities
+      properties:
+        relatedEntities:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/RelatedEntity'
+    Retention:
+      type: object
+      description: Indicates the time period for which the document has to be stored in archive
+      properties:
+        retentionEndDateTime:
+          type: string
+          example: '2018-10-10T10:00:00Z'
+          format: date-time
+          description: The calculated end date for the retention after which the document can be automatically disposed of.
+        retentionPeriod:
+          type: string
+          example: 10.00.00
+          description: >-
+            The name of the retention policy applied / to-be applied to the document. It defines for how long document
+            needs to be stored, the format is NumberOfYears.NumberOfMonths.NumberOfDays
+        retentionStartDateTime:
+          type: string
+          example: '2018-10-10T10:00:00Z'
+          format: date-time
+          description: The start date (past - future) for the retention. This is determined by the retention trigger / source application.
+    Scope:
+      type: object
+      description: >-
+        Scope of the document. Scope helps in finding the documents which don't have an identifier or are not related
+        to any client.The scope set indicates country, business lines, region etc. For Example - If the document is
+        related to a specific domain, then the scope of the document will be the domain name or if the document was
+        stored by a German user, the scope information will have type- Country, value- Germany.
+      properties:
+        administrationId:
+          type: string
+          example: BO Table
+          description: This is the administration where these values are maintained, if any.
+        type:
+          type: string
+          example: Country
+          description: The scope set indicates country, business lines, region etc.
+        value:
+          type: string
+          example: Netherlands
+          description: This is the value for the type of scope.
+    DossierSearchCriteria:
+      type: object
+      description: >-
+        This Model contains attributes used to search a unique dossier to which the document should be linked.
+        If the consumer does not know the unique dossier id, then the consumer can search for a dossier based on the
+        dossier name and if a unique dossier is found, then document will be linked to that dossier.In conjuction with
+        the queryType it can be specified how should the name be searched
+      properties:
+        dossierName:
+          type: string
+          example: Nieuwe_Hypotheek_123456789_14022018
+          description: Name of the dossier on which search has to be performed
+        dossierNameQueryType:
+          type: string
+          description: This enum tells how the dossierName has to be queried.
+            FULL_MATCH - means the entire value has to be matched against the dossierName field
+            INCLUDE - means the value can be anywhere in the dossierName field
+            STARTS_WITH - means the value is the starting string of the dossierName field
+          enum:
+            - INCLUDE
+            - STARTS_WITH
+            - FULL_MATCH
+    Error:
+      type: object
+      description: >-
+        Points to a message item in the content management item which can be used to render messages of type ERROR.
+        This message item can be fetched using the messageKey and params.
+      required:
+        - code
+        - message
+        - status
+      properties:
+        code:
+          type: string
+          description: >-
+            The unique error code key which is used to lookup the message in the content management system.
+          example: INTERNAL_SERVER_ERROR
+        message:
+          type: string
+          description: >-
+            The message text carries the more detailed and understandable description of the error code. This is to be
+            used primarily for developement and debug environment.
+          example: Technical issue within the service
+        traceId:
+          type: string
+          description: Unique tracing Id to easily trace root cause in case of errors.
+          example: 121212
+        status:
+          type: string
+          description: The HTTP status code where the code is categorized.
+          example: 500
+        params:
+          type: array
+          description: >-
+            Optionally, a message in the content management system may contain
+            dynamic parameters. These attributes give the keys to those dynamic
+            parameters, which are used for look-up.
+          items:
+            type: string
+          minItems: 0
+          maxItems: 2
+    Errors:
+      type: object
+      description: >-
+        Extra information to the REST client incase of erroneous stuations(HTTP
+        status codes 4xx/5xx)
+      properties:
+        errors:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Error'
